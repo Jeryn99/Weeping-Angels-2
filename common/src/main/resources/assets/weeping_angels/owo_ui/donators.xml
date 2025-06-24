@@ -1,0 +1,39 @@
+<owo-ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/wisp-forest/owo-lib/1.20/owo-ui.xsd">
+    <components>
+        <flow-layout id="root" direction="vertical">
+            <children>
+                <!-- Title Label -->
+                <label id="title">
+                    <text>💎 Donators</text>
+                </label>
+
+                <!-- Donator list container -->
+                <flow-layout id="donator-list" direction="vertical">
+                    <children>
+                        <!-- We'll dynamically add donators here in code -->
+                    </children>
+                </flow-layout>
+
+                <!-- No donators found label, hidden by default -->
+                <label id="no-donators-label">
+                    <text>No donators found.</text>
+                </label>
+            </children>
+
+            <!-- Center the whole layout -->
+            <horizontal-alignment>center</horizontal-alignment>
+            <vertical-alignment>center</vertical-alignment>
+
+            <!-- Some padding -->
+            <padding>
+                <all>10</all>
+            </padding>
+
+            <!-- Background panel -->
+            <surface>
+                <panel dark="true" />
+            </surface>
+        </flow-layout>
+    </components>
+</owo-ui>

@@ -12,6 +12,32 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
 }
 
+sourceSets.main.resources {
+    srcDir project(":neoforge").file("src/generated/resources").absolutePath
+}
+
+repositories {
+    maven { url 'https://maven.wispforest.io/releases/' }
+    maven {
+        name = "Terraformers"
+        url = "https://maven.terraformersmc.com/"
+    }
+}
+
+
+
+dependencies {
+    modImplementation "io.wispforest:owo-lib:${project.owo_version}"
+    include "io.wispforest:owo-sentinel:${project.owo_version}"
+
+    annotationProcessor("io.wispforest:owo-lib-neoforge:0.12.21-beta.1+1.21.5") {
+        exclude group: "org.sinytra.forgified-fabric-api"
+    }
+    modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
+
+}
+
+
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {

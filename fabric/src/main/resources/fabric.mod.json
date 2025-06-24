@@ -16,7 +16,10 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "com.example.examplemod.ExampleMod"
+            "mc.jeryn.dev.angels.WeepingAngelsFabric"
+        ],
+        "client": [
+            "mc.jeryn.dev.angels.WeepingAngelsFabricClient"
         ]
     },
     "mixins": [
