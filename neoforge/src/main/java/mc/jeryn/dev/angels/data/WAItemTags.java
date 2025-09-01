@@ -20,7 +20,7 @@ public class WAItemTags extends ItemTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        tag(WATags.ANGEL_THEFT)
+        tag(WATags.STEALABLE_ITEMS)
                 .addTag(ItemTags.PICKAXES)
                 .add(Items.COMPASS)
                 .add(Items.RECOVERY_COMPASS)

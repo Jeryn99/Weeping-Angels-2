@@ -2,6 +2,7 @@ package mc.jeryn.dev.angels.registry;
 
 import mc.jeryn.dev.angels.WAConstants;
 import mc.jeryn.dev.angels.platform.services.RegisterHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -32,8 +33,11 @@ public class WATabs {
                     .title(Component.translatable("itemGroup." + key.location().getNamespace() + "." + key.location().getPath()))
                     .icon(() -> new ItemStack(WAItems.ANGEL_SPAWNER))
                     .displayItems((parameters, output) -> {
-                        output.accept(WAItems.ANGEL_SPAWNER);
-                        // Add more items here as needed
+                        BuiltInRegistries.ITEM.entrySet().forEach(resourceKeyItemEntry -> {
+                            if(resourceKeyItemEntry.getKey().location().getNamespace().equals(WAConstants.MOD_ID)) {
+                                output.accept(resourceKeyItemEntry.getValue());
+                            }
+                        });
                     })
                     .build()
     );

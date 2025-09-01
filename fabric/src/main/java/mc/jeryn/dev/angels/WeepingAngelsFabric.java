@@ -1,5 +1,6 @@
 package mc.jeryn.dev.angels;
 
+import mc.jeryn.dev.angels.fabric.events.WAFabricServerEvents;
 import mc.jeryn.dev.angels.platform.services.RegisterHelper;
 import mc.jeryn.dev.angels.registry.*;
 import mc.jeryn.dev.angels.registry.entity.AbstractWeepingAngel;
@@ -21,7 +22,6 @@ public class WeepingAngelsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
 
-        // Use Fabric to bootstrap the Common mod.
         WAConstants.LOG.info("Hello Fabric world!");
         CommonClass.init();
 
@@ -32,6 +32,8 @@ public class WeepingAngelsFabric implements ModInitializer {
         registerHelper(BuiltInRegistries.CREATIVE_MODE_TAB, WATabs::registerTabs);
 
         entityAttributes();
+
+        WAFabricServerEvents.init();
     }
 
     private void entityAttributes() {

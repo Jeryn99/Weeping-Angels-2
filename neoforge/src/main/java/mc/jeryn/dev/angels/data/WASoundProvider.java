@@ -16,25 +16,31 @@ public class WASoundProvider extends SoundDefinitionsProvider {
 
     @Override
     public void registerSounds() {
-        add(WASounds.DING, simple(WASounds.DING));
-        add(WASounds.BLOW, simple(WASounds.BLOW));
-        add(WASounds.NECK_SNAP, simple(WASounds.NECK_SNAP));
-        add(WASounds.PROJECTOR, simple(WASounds.PROJECTOR));
-        add(WASounds.ANGEL_MOCKING, simple(WASounds.ANGEL_MOCKING));
-        add(WASounds.TARDIS_TAKEOFF, simple(WASounds.TARDIS_TAKEOFF));
-        add(WASounds.DISC_SALLY, simple(WASounds.DISC_SALLY));
-        add(WASounds.DISC_TIME_PREVAILS, simple(WASounds.DISC_TIME_PREVAILS));
-        add(WASounds.KNOCK, simple(WASounds.KNOCK));
-        add(WASounds.LOCKED, simple(WASounds.LOCKED));
-        add(WASounds.CRUMBLING, simple(WASounds.CRUMBLING));
-        add(WASounds.CATACOMB, simple(WASounds.CATACOMB));
-        add(WASounds.TELEPORT, simple(WASounds.TELEPORT));
-        add(WASounds.ANGEL_NOISE, simple(WASounds.ANGEL_NOISE));
+        add(WASounds.DING, streamingSimple(WASounds.DING));
+        add(WASounds.BLOW, streamingSimple(WASounds.BLOW));
+        add(WASounds.NECK_SNAP, streamingSimple(WASounds.NECK_SNAP));
+        add(WASounds.PROJECTOR, streamingSimple(WASounds.PROJECTOR));
+        add(WASounds.ANGEL_MOCKING, streamingSimple(WASounds.ANGEL_MOCKING));
+        add(WASounds.TARDIS_TAKEOFF, streamingSimple(WASounds.TARDIS_TAKEOFF));
+        add(WASounds.DISC_SALLY, streamingSimple(WASounds.DISC_SALLY));
+        add(WASounds.DISC_TIME_PREVAILS, streamingSimple(WASounds.DISC_TIME_PREVAILS));
+        add(WASounds.KNOCK, streamingSimple(WASounds.KNOCK));
+        add(WASounds.LOCKED, streamingSimple(WASounds.LOCKED));
+        add(WASounds.CRUMBLING, streamingSimple(WASounds.CRUMBLING));
+        add(WASounds.CATACOMB, streamingSimple(WASounds.CATACOMB));
+        add(WASounds.TELEPORT, streamingSimple(WASounds.TELEPORT));
+        add(WASounds.ANGEL_NOISE, streamingSimple(WASounds.ANGEL_NOISE));
     }
 
     private SoundDefinition simple(SoundEvent sound) {
         ResourceLocation id = sound.location();
         return definition()
                 .with(sound(id.toString()));
+    }
+
+    private SoundDefinition streamingSimple(SoundEvent sound) {
+        ResourceLocation id = sound.location();
+        return definition()
+                .with(sound(id.toString()).stream(true));
     }
 }

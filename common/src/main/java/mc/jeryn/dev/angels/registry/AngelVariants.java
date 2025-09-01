@@ -13,47 +13,25 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AngelVariants {
 
-    // Ore Variants
-    public static final Map<ResourceLocation, AngelVariants> ORE_VARIANTS = Util.make(new Object2ObjectOpenHashMap<>(), (objectOpenHashMap) -> objectOpenHashMap.defaultReturnValue(AngelVariants.IRON));
-    public static AngelVariants STONE, BASALT, DIRT, COPPER, MOSSY, RUSTED, RUSTED_NO_ARM, RUSTED_NO_WING, RUSTED_NO_HEAD, QUARTZ, LAPIS_LAZULI, IRON, GOLD, EMERALD, DIAMOND;
-    // Main Variant Registry
-    public static final Map<ResourceLocation, AngelVariants> VARIANTS = Util.make(new Object2ObjectOpenHashMap<>(), (objectOpenHashMap) -> objectOpenHashMap.defaultReturnValue(AngelVariants.STONE));
-    public static AngelVariants GAS_STONE, GAS_RUSTED, A_DIZZLE, DOCTOR;
+    private static final Map<ResourceLocation, AngelVariants> ORE_VARIANTS = new Object2ObjectOpenHashMap<>();
+    private static final Map<ResourceLocation, AngelVariants> VARIANTS = new Object2ObjectOpenHashMap<>();
 
-    public static void init() {
-        STONE = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "normal"), new ItemStack(Blocks.STONE), false);
-        DOCTOR = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "doctor"), new ItemStack(Blocks.STONE), false);
-        BASALT = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "basalt"), new ItemStack(Blocks.BASALT), false);
-        COPPER = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "copper"), new ItemStack(Blocks.COPPER_ORE), true);
-        DIRT = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "dirt"), new ItemStack(Blocks.DIRT), false);
-        MOSSY = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "mossy"), new ItemStack(Blocks.MOSSY_COBBLESTONE), false);
-        RUSTED = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "rusted"), new ItemStack(Blocks.MOSSY_COBBLESTONE), false);
-        RUSTED_NO_ARM = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "rusted_no_arm"), new ItemStack(Blocks.GRANITE), false);
-        RUSTED_NO_WING = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "rusted_no_wing"), new ItemStack(Blocks.GRANITE), false);
-        RUSTED_NO_HEAD = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "rusted_no_head"), new ItemStack(Blocks.GRANITE), false);
-        QUARTZ = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "quartz"), new ItemStack(Blocks.QUARTZ_PILLAR), false);
-        LAPIS_LAZULI = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "lapis_lazuli"), new ItemStack(Blocks.LAPIS_ORE), true);
-        IRON = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "iron"), new ItemStack(Blocks.IRON_ORE), true);
-        GOLD = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "gold"), new ItemStack(Blocks.GOLD_ORE), true);
-        EMERALD = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "emerald"), new ItemStack(Blocks.EMERALD_ORE), true);
-        DIAMOND = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "diamond"), new ItemStack(Blocks.DIAMOND_ORE), true);
-
-        GAS_RUSTED = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "gas_rusted"), new ItemStack(Blocks.STONE), false);
-        GAS_STONE = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "gas_stone"), new ItemStack(Blocks.GRANITE), false);
-        A_DIZZLE = registerVariant(ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, "a_dizzle"), new ItemStack(Blocks.GRANITE), false);
-    }
+    public static AngelVariants STONE, BASALT, DIRT, COPPER, MOSSY, RUSTED;
+    public static AngelVariants RUSTED_NO_ARM, RUSTED_NO_WING, RUSTED_NO_HEAD;
+    public static AngelVariants QUARTZ, LAPIS_LAZULI, IRON, GOLD, EMERALD, DIAMOND;
+   // public static AngelVariants GAS_STONE, GAS_RUSTED, A_DIZZLE, DOCTOR;
 
     private final ItemStack drops;
     private final ResourceLocation regName;
 
     public AngelVariants(ResourceLocation resourceLocation, ItemStack drops) {
-        this.drops = drops;
         this.regName = resourceLocation;
+        this.drops = drops;
     }
 
     public ResourceLocation location() {
@@ -64,67 +42,67 @@ public class AngelVariants {
         return drops;
     }
 
-
-    // TODO Nicer way
-    public static AngelVariants getVariantForPos(WeepingAngel weepingAngel) {
-        Level level = weepingAngel.level();
-        RandomSource randomSource = level.random;
-
-        boolean isOrePosition = weepingAngel.blockPosition().getY() < 50 && !level.canSeeSky(weepingAngel.blockPosition());
-
-        Holder<Biome> currentBiome = level.getBiome(weepingAngel.blockPosition());
-        boolean isNether = currentBiome.is(BiomeTags.IS_NETHER);
-        boolean isJungle = currentBiome.is(BiomeTags.IS_JUNGLE);
-
-        if (isJungle) {
-            return MOSSY;
-        }
-
-        // Nether Related
-        if (isNether) {
-            return randomSource.nextBoolean() ? QUARTZ : BASALT;
-        }
-
-        // Ores
-        if (isOrePosition && randomSource.nextInt(100) < 10) {
-            return getRandomVariant(ORE_VARIANTS, randomSource);
-        }
-
-        // Random value after conditions
-        Collection<AngelVariants> variants = VARIANTS.values();
-        variants.removeIf(angelTextureVariant -> angelTextureVariant == QUARTZ || angelTextureVariant == MOSSY || angelTextureVariant == BASALT || ORE_VARIANTS.containsKey(angelTextureVariant.regName));
-        return variants.stream().skip((int) (variants.size() * Math.random())).findFirst().get();
+    public static void init() {
+        STONE = register("normal", Blocks.STONE, false);
+     //   DOCTOR = register("doctor", Blocks.STONE, false);
+        BASALT = register("basalt", Blocks.BASALT, false);
+        COPPER = register("copper", Blocks.COPPER_ORE, true);
+        DIRT = register("dirt", Blocks.DIRT, false);
+        MOSSY = register("mossy", Blocks.MOSSY_COBBLESTONE, false);
+        RUSTED = register("rusted", Blocks.MOSSY_COBBLESTONE, false);
+        RUSTED_NO_ARM = register("rusted_no_arm", Blocks.GRANITE, false);
+        RUSTED_NO_WING = register("rusted_no_wing", Blocks.GRANITE, false);
+        RUSTED_NO_HEAD = register("rusted_no_head", Blocks.GRANITE, false);
+        QUARTZ = register("quartz", Blocks.QUARTZ_PILLAR, false);
+        LAPIS_LAZULI = register("lapis_lazuli", Blocks.LAPIS_ORE, true);
+        IRON = register("iron", Blocks.IRON_ORE, true);
+        GOLD = register("gold", Blocks.GOLD_ORE, true);
+        EMERALD = register("emerald", Blocks.EMERALD_ORE, true);
+        DIAMOND = register("diamond", Blocks.DIAMOND_ORE, true);
+  //      GAS_RUSTED = register("gas_rusted", Blocks.STONE, false);
+   //     GAS_STONE = register("gas_stone", Blocks.GRANITE, false);
+  //      A_DIZZLE = register("a_dizzle", Blocks.GRANITE, false);
     }
 
-    public static AngelVariants getRandomVariant(Map<ResourceLocation, AngelVariants> variantMap, RandomSource randomSource) {
-        int index = randomSource.nextInt(variantMap.size());
-        return variantMap.values().toArray(new AngelVariants[0])[index];
+    private static AngelVariants register(String name, net.minecraft.world.level.block.Block block, boolean isOre) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(WAConstants.MOD_ID, name);
+        AngelVariants variant = new AngelVariants(id, new ItemStack(block));
+        WAConstants.LOG.info("Registered: {}", id);
+
+        if (isOre) ORE_VARIANTS.put(id, variant);
+        VARIANTS.put(id, variant);
+        return variant;
     }
 
-    public static AngelVariants getVariant(ResourceLocation resourceLocation) {
-        if (VARIANTS.containsKey(resourceLocation)) {
-            return VARIANTS.get(resourceLocation);
-        }
-        return STONE;
-    }
-
-    public static AngelVariants registerVariant(ResourceLocation resourceLocation, ItemStack itemStack, boolean isOre) {
-        WAConstants.LOG.info("Registered: {}", resourceLocation);
-        return registerVariant(resourceLocation, new AngelVariants(resourceLocation, itemStack), isOre);
-    }
-
-    public static AngelVariants registerVariant(ResourceLocation resourceLocation, AngelVariants angelVariant, boolean isOre) {
-
-        if (isOre) {
-            ORE_VARIANTS.put(resourceLocation, angelVariant);
-        }
-
-        if (VARIANTS.containsKey(resourceLocation)) {
-            VARIANTS.replace(resourceLocation, angelVariant);
-        }
-        VARIANTS.put(resourceLocation, angelVariant);
-        return angelVariant;
+    public static AngelVariants getVariant(ResourceLocation id) {
+        return VARIANTS.getOrDefault(id, STONE);
     }
 
 
+    public static AngelVariants getVariantForPos(WeepingAngel angel) {
+        Level level = angel.level();
+        RandomSource random = level.random;
+
+        var pos = angel.blockPosition();
+        boolean isUnderground = pos.getY() < 50 && !level.canSeeSky(pos);
+
+        Holder<Biome> biome = level.getBiome(pos);
+        if (biome.is(BiomeTags.IS_JUNGLE)) return MOSSY;
+        if (biome.is(BiomeTags.IS_NETHER)) return random.nextBoolean() ? QUARTZ : BASALT;
+
+        if (isUnderground && random.nextInt(100) < 10) {
+            return getRandomVariant(ORE_VARIANTS, random);
+        }
+
+        List<AngelVariants> filtered = VARIANTS.values().stream()
+                .filter(v -> v != QUARTZ && v != MOSSY && v != BASALT && !ORE_VARIANTS.containsKey(v.location()))
+                .collect(Collectors.toList());
+
+        return filtered.isEmpty() ? STONE : filtered.get(random.nextInt(filtered.size()));
+    }
+
+    public static AngelVariants getRandomVariant(Map<ResourceLocation, AngelVariants> map, RandomSource random) {
+        if (map.isEmpty()) return STONE;
+        return new ArrayList<>(map.values()).get(random.nextInt(map.size()));
+    }
 }

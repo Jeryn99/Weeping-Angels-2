@@ -1,16 +1,15 @@
 package mc.jeryn.dev.angels;
 
 
-import mc.jeryn.dev.angels.data.WAEnglish;
-import mc.jeryn.dev.angels.data.WAItemTags;
-import mc.jeryn.dev.angels.data.WASoundProvider;
-import mc.jeryn.dev.angels.data.WorldGenProvider;
+import mc.jeryn.dev.angels.data.*;
 import mc.jeryn.dev.angels.platform.services.RegisterHelper;
 import mc.jeryn.dev.angels.registry.*;
+import net.minecraft.client.data.models.ModelProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.DataGenerator;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.TagsProvider;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -55,10 +54,26 @@ public class WeepingAngelsNeoForge {
     }
 
     @SubscribeEvent
-    public static void clientData(GatherDataEvent.Client client){
+    public static void clientData(GatherDataEvent.Client client) {
         DataGenerator generator = client.getGenerator();
-        client.addProvider(new WASoundProvider(generator.getPackOutput()));
-        client.addProvider(new WAEnglish(generator.getPackOutput()));
+        PackOutput output = generator.getPackOutput();
+        CompletableFuture<HolderLookup.Provider> lookupProvider = client.getLookupProvider();
+
+        // Register all data providers
+        client.addProvider(new WASoundProvider(output));
+        client.addProvider(new WAModelProviders(output));
+        client.addProvider(new WAEntityTagsProvider(output, lookupProvider));
+        client.addProvider(new WAEnglish(output));
+        client.addProvider(new WAItemTags(
+                output,
+                lookupProvider,
+                CompletableFuture.completedFuture(TagsProvider.TagLookup.empty())
+        ));
+        client.addProvider(new WABlocktags(
+                output,
+                lookupProvider
+        ));
+        client.addProvider(new WorldGenProvider(output, lookupProvider));
     }
 
     @SubscribeEvent
@@ -68,15 +83,16 @@ public class WeepingAngelsNeoForge {
 
         server.addProvider(new WASoundProvider(generator.getPackOutput()));
         server.addProvider(new WAEnglish(generator.getPackOutput()));
-
         server.addProvider(new WAItemTags(
                 generator.getPackOutput(),
                 lookupProvider,
                 CompletableFuture.completedFuture(TagsProvider.TagLookup.empty())
         ));
-
         server.addProvider(new WorldGenProvider(generator.getPackOutput(), lookupProvider));
+
+
     }
+
 
 
 

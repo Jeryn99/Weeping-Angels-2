@@ -34,16 +34,8 @@ public class WADamageTypes {
         return Collections.unmodifiableList(DAMAGE_TYPES);
     }
 
-    public static DamageSource getSource(ServerLevel level, ResourceKey<DamageType> damageTypeResourceKey) {
-        Optional<Holder.Reference<Registry<DamageType>>> optionalRegistry = level.registryAccess().get(Registries.DAMAGE_TYPE);
-
-        if (optionalRegistry.isEmpty()) {
-            throw new IllegalStateException("DamageType registry is not available");
-        }
-
-        Registry<DamageType> damageTypeRegistry = optionalRegistry.get().value();
-        Optional<Holder.Reference<DamageType>> damageTypeHolder = damageTypeRegistry.get(damageTypeResourceKey);
-
-        return new DamageSource(damageTypeHolder.get());
+    public static DamageSource getSource(ServerLevel serverLevel, ResourceKey<DamageType> damageTypeKey) {
+        Registry<DamageType> damageTypeRegistry = serverLevel.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE);
+        return new DamageSource(damageTypeRegistry.getOrThrow(damageTypeKey));
     }
 }

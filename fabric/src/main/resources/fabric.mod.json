@@ -8,8 +8,9 @@
         "${mod_author}"
     ],
     "contact": {
-        "homepage": "https://fabricmc.net/",
-        "sources": "https://github.com/FabricMC/fabric-example-mod"
+        "homepage": "https://jeryn.dev/mc/projects/weeping_angels",
+        "sources": "https://github.com/Jeryn99/Weeping-Angels",
+        "issues": "https://github.com/Jeryn99/Weeping-Angels/issues"
     },
     "license": "${license}",
     "icon": "${mod_id}.png",

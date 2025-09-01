@@ -1,7 +1,9 @@
-package mc.jeryn.dev.angels.data.model;
+package mc.jeryn.dev.angels.data.model.donators;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import mc.jeryn.dev.angels.CommonClass;
+import mc.jeryn.dev.angels.WAConstants;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -17,14 +19,14 @@ public class VIPCacheManager {
 
     private static final String ENDPOINT = "https://api.jeryn.dev/mc/vips";
     private static final String CACHE_FILE = "vip_cache.json";
-    private static final long CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+    private static final long CACHE_TTL_MS = 60 * 60 * 1000;
 
     private static final Gson gson = new Gson();
     private static List<Donator> cachedDonators = Collections.emptyList();
 
     public static List<Donator> getVIPs() {
         if (isCacheValid()) {
-            System.out.println("[INFO] Using cached VIP data.");
+            WAConstants.LOG.info("Using cached VIP data.");
             return readFromCache();
         }
 
@@ -34,7 +36,7 @@ public class VIPCacheManager {
             cachedDonators = parseJson(json);
             return cachedDonators;
         } catch (IOException e) {
-            System.err.println("[WARN] Failed to fetch from endpoint, using cache if available.");
+            WAConstants.LOG.warn("Failed to fetch from endpoint, using cache if available.");
             return readFromCache();
         }
     }
@@ -50,7 +52,7 @@ public class VIPCacheManager {
             cachedDonators = parseJson(json);
             return cachedDonators;
         } catch (IOException e) {
-            System.err.println("[ERROR] Could not read from cache: " + e.getMessage());
+            WAConstants.LOG.error("Could not read from cache: {}", e.getMessage());
             return Collections.emptyList();
         }
     }
@@ -59,7 +61,7 @@ public class VIPCacheManager {
         try (FileWriter writer = new FileWriter(CACHE_FILE)) {
             writer.write(json);
         } catch (IOException e) {
-            System.err.println("[ERROR] Failed to write to cache: " + e.getMessage());
+            WAConstants.LOG.error("Failed to write to cache: {}", e.getMessage());
         }
     }
 
@@ -87,11 +89,4 @@ public class VIPCacheManager {
     }
 
 
-    // Example usage
-    public static void main(String[] args) {
-        List<Donator> vips = getVIPs();
-        for (Donator d : vips) {
-            System.out.println(d);
-        }
-    }
 }

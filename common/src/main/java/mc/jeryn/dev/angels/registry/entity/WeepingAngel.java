@@ -1,11 +1,11 @@
 package mc.jeryn.dev.angels.registry.entity;
 
 import com.google.common.collect.ImmutableList;
-import mc.jeryn.dev.angels.registry.AngelVariants;
-import mc.jeryn.dev.angels.registry.WAEntities;
-import mc.jeryn.dev.angels.registry.WAItems;
-import mc.jeryn.dev.angels.registry.WASounds;
+import mc.jeryn.dev.angels.CommonClass;
+import mc.jeryn.dev.angels.registry.*;
+import mc.jeryn.dev.angels.registry.damage.WADamageTypes;
 import mc.jeryn.dev.angels.util.HurtUtil;
+import mc.jeryn.dev.angels.util.WATeleporter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -17,8 +17,10 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.ClimbOnTopOfPowderSnowGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
@@ -27,18 +29,25 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.warden.Warden;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -46,10 +55,65 @@ public class WeepingAngel extends AbstractWeepingAngel {
 
     public AnimationState POSE_ANIMATION_STATE = new AnimationState();
 
+    private static final double COMMUNICATION_RADIUS = 16.0;
+    private static final double FORMATION_SPACING = 2.5;
+
     private int fakeAnimation = -1;
 
     public int getFakeAnimation() {
         return fakeAnimation;
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        if (tickCount % 20 == 0) {
+            coordinateWithNearbyAngels();
+        }
+    }
+
+    private void coordinateWithNearbyAngels() {
+        if (level().isClientSide()) return;
+
+        List<WeepingAngel> nearbyAngels = level().getEntitiesOfClass(
+                WeepingAngel.class,
+                getBoundingBox().inflate(COMMUNICATION_RADIUS),
+                angel -> angel != this && !angel.isRemoved()
+        );
+
+        if (nearbyAngels.isEmpty()) return;
+
+        Vec3 center = getCenterOfMass(nearbyAngels);
+        double angleOffset = 360.0 / (nearbyAngels.size() + 1);
+
+        for (int i = 0; i < nearbyAngels.size(); i++) {
+            WeepingAngel angel = nearbyAngels.get(i);
+            double angle = Math.toRadians(i * angleOffset);
+            double offsetX = FORMATION_SPACING * Math.cos(angle);
+            double offsetZ = FORMATION_SPACING * Math.sin(angle);
+            BlockPos targetPos = new BlockPos((int) (center.x + offsetX), (int) center.y, (int) (center.z + offsetZ));
+
+            angel.getNavigation().moveTo(targetPos.getX(), targetPos.getY(), targetPos.getZ(), 1.0);
+        }
+
+        // Position this angel too (optional if you want the leader in formation)
+        getNavigation().moveTo(center.x, center.y, center.z, 1.0);
+    }
+
+    private Vec3 getCenterOfMass(List<WeepingAngel> angels) {
+        double sumX = getX();
+        double sumY = getY();
+        double sumZ = getZ();
+
+        for (WeepingAngel angel : angels) {
+            sumX += angel.getX();
+            sumY += angel.getY();
+            sumZ += angel.getZ();
+        }
+
+        int total = angels.size() + 1; // include this angel
+        return new Vec3(sumX / total, sumY / total, sumZ / total);
     }
 
     public void setFakeAnimation(int fakeAnimation) {
@@ -83,44 +147,27 @@ public class WeepingAngel extends AbstractWeepingAngel {
         return new ItemStack(WAItems.ANGEL_SPAWNER);
     }
 
-    /*@Override
-    public boolean doHurtTarget(Entity pEntity) {
+
+    @Override
+    public boolean doHurtTarget(ServerLevel serverLevel, Entity pEntity) {
         if (!(pEntity instanceof Player player))
             return false;
 
         float attackDamage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        ServerLevel serverLevel = pEntity.level() instanceof ServerLevel ? (ServerLevel) pEntity.level() : null;
-
-        if (serverLevel == null)
-            return false;
 
         // Teleporting
-        if (random.nextInt(100) < CommonClass.CONFIG.teleportChance()) {
-            ServerLevel chosenDimension = WAConfiguration.CONFIG.interdimensionalTeleporting.get() ? Teleporter.getRandomDimension(random, serverLevel) : serverLevel;
-            int teleportRange = WAConfiguration.CONFIG.teleportRange.get();
-
-            for (int i = 0; i < 10; i++) {
-                int xCoord = (int) (getX() + random.nextInt(teleportRange));
-                int zCoord = (int) (getZ() + random.nextInt(teleportRange));
-                BlockPos finalY = Teleporter.findClosestValidPosition(chosenDimension, new BlockPos(xCoord, random.nextInt(161) - 40, zCoord));
-                if(finalY == null) return false;
-                if (Teleporter.performTeleport(pEntity, chosenDimension, xCoord, finalY.getY(), zCoord, pEntity.getYRot(), pEntity.getXRot(), true)) {
-                    return true;
-                }
-            }
-            return false; // Failed to teleport after multiple attempts
+        if (WATeleporter.tryRandomTeleport(pEntity, serverLevel, random)) {
+            return true;
         }
 
         // Theft
         stealItems(player);
 
         // Hurt
-        boolean didHurt = pEntity.hurt(WADamageSources.getSource(serverLevel, WADamageSources.SNAPPED_NECK), attackDamage);
-        this.doEnchantDamageEffects(this, pEntity);
+        boolean didHurt = pEntity.hurtOrSimulate(WADamageTypes.getSource(serverLevel, WADamageTypes.SNAPPED_NECK), attackDamage);
         this.setLastHurtMob(pEntity);
         return didHurt;
     }
-*/
 
 
     @Override
@@ -181,26 +228,29 @@ public class WeepingAngel extends AbstractWeepingAngel {
             if (isHooked()) {
                 setHooked(false);
             }
-           /* if (isSeen()) {
+            if (isSeen()) {
                 investigateBlocks();
-            }*/
+            }
         }
     }
 
-   /* public void stealItems(Player player) {
-        if(!CommonClass.CONFIG.angelTheft()) return;
-        if (!getMainHandItem().isEmpty()) return;
-        Inventory playerInv = player.getInventory();
-        for (int i = 0; i < playerInv.items.size(); i++) {
-            ItemStack item = playerInv.items.get(i);
-            if (item.is(WATags.STEALABLE_ITEMS) && getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+    public void stealItems(Player player) {
+        if (!CommonClass.CONFIG.angelTheft()) return;
+        if (!getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) return;
+
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack item = inventory.getItem(i);
+
+            if (item.is(WATags.STEALABLE_ITEMS) && item != player.getOffhandItem()) {
                 setItemInHand(InteractionHand.MAIN_HAND, item.copy());
                 setGuaranteedDrop(EquipmentSlot.MAINHAND);
-                playerInv.setItem(i, ItemStack.EMPTY);
-                return;
+                inventory.setItem(i, ItemStack.EMPTY);
+                break;
             }
         }
-    }*/
+    }
+
 
 
     @Override
@@ -250,6 +300,17 @@ public class WeepingAngel extends AbstractWeepingAngel {
 
     @Override
     public boolean hurtServer(ServerLevel serverLevel, DamageSource damageSource, float amount) {
+        Entity directEntity = damageSource.getDirectEntity();
+
+        // Check if the angel was hit by a projectile
+        if (directEntity instanceof Projectile projectile) {
+            Entity owner = projectile.getOwner();
+            if (owner instanceof LivingEntity target) {
+                shootBackProjectile(projectile, target);
+                return false;
+            }
+        }
+
         boolean isHurt = HurtUtil.handleAngelHurt(this, damageSource, amount);
         if (isHurt) {
             if (getVariant().getDrops().getItem() instanceof BlockItem blockItem) {
@@ -262,37 +323,79 @@ public class WeepingAngel extends AbstractWeepingAngel {
         return false;
     }
 
+    private void shootBackProjectile(Projectile original, LivingEntity target) {
+        if (level().isClientSide() || target == null) return;
+
+        Entity reflectedEntity = original.getType().create(level(), EntitySpawnReason.TRIGGERED);
+        if (!(reflectedEntity instanceof Projectile reflected)) return;
+
+        reflected.setOwner(this);
+        reflected.shoot(getX(), getEyeY() - 0.1, getZ(), getYRot(), getXRot());
+
+        Vec3 from = getEyePosition();
+        Vec3 to = target.getEyePosition();
+        Vec3 direction = to.subtract(from).normalize();
+
+        float speed = 1.6f;
+        float inaccuracy = 0.01f;
+
+        reflected.shoot(direction.x, direction.y, direction.z, speed, inaccuracy);
+
+        if (reflected instanceof AbstractArrow arrow && original instanceof AbstractArrow originalArrow) {
+            arrow.setCritArrow(originalArrow.isCritArrow());
+            arrow.pickup = AbstractArrow.Pickup.DISALLOWED;
+        }
+
+        level().addFreshEntity(reflected);
+    }
+
     @Override
     protected void tickDeath() {
         Level level = level();
         ++this.deathTime;
-        if (this.deathTime == 20 && !level.isClientSide()) {
-            if (shouldDropLoot()) {
-                ItemEntity itemEntity = new ItemEntity(EntityType.ITEM, level);
-                itemEntity.setItem(getVariant().getDrops());
-                itemEntity.setPos(getX(), getY(), getZ());
-                level.addFreshEntity(itemEntity);
-            }
-            this.remove(Entity.RemovalReason.KILLED);
-        }
 
+        if (!level.isClientSide()) {
+            if (deathTime <= 20) {
+                ((ServerLevel) level).sendParticles(
+                        new BlockParticleOption(ParticleTypes.BLOCK, Blocks.STONE.defaultBlockState()),
+                        getX(), getY(), getZ(),
+                        40, 0.5, 0.5, 0.5, 0.1
+                );
+
+                if (deathTime == 1) {
+                    level.playSound(null, blockPosition(), SoundEvents.STONE_BREAK, SoundSource.HOSTILE, 1.0F, 0.6F);
+                }
+            }
+
+            if (deathTime >= 20) {
+                if (shouldDropLoot()) {
+                    ItemEntity itemEntity = new ItemEntity(EntityType.ITEM, level);
+                    itemEntity.setItem(getVariant().getDrops());
+                    itemEntity.setPos(getX(), getY(), getZ());
+                    level.addFreshEntity(itemEntity);
+                }
+                remove(RemovalReason.KILLED);
+            }
+        }
     }
 
-    /*public void investigateBlocks() {
-        Level level = level();
-        if (level.isClientSide() || !level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) || !WAConfiguration.CONFIG.blockBreaking.get())
-            return;
-        for (Iterator<BlockPos> iterator = BlockPos.withinManhattanStream(blockPosition(), 25, 3, 25).iterator(); iterator.hasNext(); ) {
-            BlockPos pos = iterator.next();
-            BlockState blockState = level.getBlockState(pos);
-            BlockReactions.BlockReaction blockBehaviour = BlockReactions.BLOCK_BEHAVIOUR.get(blockState.getBlock());
-            boolean completed = blockBehaviour.interact(this, blockState, level, pos);
-            if (completed) {
-                Warden.applyDarknessAround((ServerLevel) level, Vec3.atBottomCenterOf(blockPosition()), this, 64);
+
+    public void investigateBlocks() {
+        if (level() instanceof ServerLevel level) {
+            if (level.isClientSide() || !level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) || !CommonClass.CONFIG.blockBreaking())
                 return;
+            for (Iterator<BlockPos> iterator = BlockPos.withinManhattanStream(blockPosition(), 25, 3, 25).iterator(); iterator.hasNext(); ) {
+                BlockPos pos = iterator.next();
+                BlockState blockState = level.getBlockState(pos);
+                BlockReactions.BlockReaction blockBehaviour = BlockReactions.BLOCK_BEHAVIOUR.get(blockState.getBlock());
+                boolean completed = blockBehaviour.interact(this, blockState, level, pos);
+                if (completed) {
+                    Warden.applyDarknessAround(level, Vec3.atBottomCenterOf(blockPosition()), this, 64);
+                    return;
+                }
             }
         }
-    }*/
+    }
 
     public Crackiness getCrackiness() {
         return WeepingAngel.Crackiness.byFraction(this.getHealth() / this.getMaxHealth());

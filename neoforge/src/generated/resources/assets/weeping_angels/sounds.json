@@ -1,0 +1,114 @@
+{
+  "angel_mocking": {
+    "sounds": [
+      {
+        "name": "weeping_angels:angel_mocking",
+        "stream": true
+      }
+    ]
+  },
+  "angel_noise": {
+    "sounds": [
+      {
+        "name": "weeping_angels:angel_noise",
+        "stream": true
+      }
+    ]
+  },
+  "blow": {
+    "sounds": [
+      {
+        "name": "weeping_angels:blow",
+        "stream": true
+      }
+    ]
+  },
+  "catacomb": {
+    "sounds": [
+      {
+        "name": "weeping_angels:catacomb",
+        "stream": true
+      }
+    ]
+  },
+  "crumbling": {
+    "sounds": [
+      {
+        "name": "weeping_angels:crumbling",
+        "stream": true
+      }
+    ]
+  },
+  "ding": {
+    "sounds": [
+      {
+        "name": "weeping_angels:ding",
+        "stream": true
+      }
+    ]
+  },
+  "disc_sally": {
+    "sounds": [
+      {
+        "name": "weeping_angels:disc_sally",
+        "stream": true
+      }
+    ]
+  },
+  "disc_time_prevails": {
+    "sounds": [
+      {
+        "name": "weeping_angels:disc_time_prevails",
+        "stream": true
+      }
+    ]
+  },
+  "knock": {
+    "sounds": [
+      {
+        "name": "weeping_angels:knock",
+        "stream": true
+      }
+    ]
+  },
+  "locked": {
+    "sounds": [
+      {
+        "name": "weeping_angels:locked",
+        "stream": true
+      }
+    ]
+  },
+  "neck_snap": {
+    "sounds": [
+      {
+        "name": "weeping_angels:neck_snap",
+        "stream": true
+      }
+    ]
+  },
+  "projector": {
+    "sounds": [
+      {
+        "name": "weeping_angels:projector",
+        "stream": true
+      }
+    ]
+  },
+  "tardis_takeoff": {
+    "sounds": [
+      {
+        "name": "weeping_angels:tardis_takeoff",
+        "stream": true
+      }
+    ]
+  },
+  "teleport": {
+    "sounds": [
+      {
+        "name": "weeping_angels:teleport",
+        "stream": true
+      }
+    ]
+  }
+}

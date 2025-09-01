@@ -1,0 +1,10 @@
+{
+  "comparator_output": 1,
+  "description": {
+    "translate": "jukebox_song.weeping_angels.music_disc_sally"
+  },
+  "length_in_seconds": 65.0,
+  "sound_event": {
+    "sound_id": "weeping_angels:disc_sally"
+  }
+}
